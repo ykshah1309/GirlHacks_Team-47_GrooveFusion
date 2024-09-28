@@ -1,122 +1,67 @@
-import os
 import zipfile
+import os
 import librosa
 import numpy as np
-import soundfile as sf
-from textblob import TextBlob
-import lyricsgenius
-import streamlit as st
+from pydub import AudioSegment
 
-# Streamlit app setup
-st.title('Dynamic Mashup App')
-st.write("Upload a zip file of MP3s to create a mashup based on energy levels and lyrics mood.")
+# Step 1: Unzip the MP3 files
+zip_path = '/content/beyonce-drunk-in-love-audio-70k (2).zip'  # Change this to your zip file path
+#extract_path_1 = '/content/extracted_songs'''
+extract_path = '/content/extracted_songs/beyonce-drunk-in-love-audio-70k'
 
-# Upload zip file using Streamlit's uploader
-uploaded_zip = st.file_uploader("Choose a zip file", type="zip")
+with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+    zip_ref.extractall(extract_path)
 
-# If a file is uploaded, extract and process it
-if uploaded_zip:
-    # Save the uploaded zip to a temporary directory
-    zip_file_path = f"/tmp/{uploaded_zip.name}"
-    with open(zip_file_path, "wb") as f:
-        f.write(uploaded_zip.getbuffer())
+# List extracted files
+mp3_files = [f for f in os.listdir(extract_path) if f.endswith('.mp3')]
+print(f'Extracted {len(mp3_files)} MP3 files.')
 
-    # Step 1: Extract the zip file
-    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall("/tmp/songs")
-        
-    # List all MP3 files from the extracted folder
-    mp3_files = [f for f in os.listdir("/tmp/songs") if f.endswith('.mp3')]
-    st.write(f"Extracted MP3 files: {mp3_files}")
+# Step 2: Extract audio features
+def extract_audio_features(file_path):
+    y, sr = librosa.load(file_path)
+    tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+    energy = np.mean(librosa.feature.rms(y=y))  # Average energy
+    return tempo, energy
 
-    # Initialize Genius API (add your own API key here)
-    GENIUS_API_TOKEN = 'your-genius-api-token'
-    genius = lyricsgenius.Genius(GENIUS_API_TOKEN)
+# Step 3: Collect features for each song
+features = {}
+for file_name in mp3_files:
+    file_path = os.path.join(extract_path, file_name)
+    tempo, energy = extract_audio_features(file_path)
+    features[file_name] = {'tempo': tempo, 'energy': energy}
 
-    # Function to extract audio features (energy)
-    def get_audio_features(file_path):
-        y, sr = librosa.load(file_path, sr=None)
-        energy = np.mean(librosa.feature.rms(y=y))
-        return energy
+# Step 4: Rank songs based on a simple score
+for file_name, data in features.items():
+    # Create a liveliness score based on tempo and energy
+    liveliness_score = data['tempo'] + (data['energy'] * 10)  # Adjust weights as necessary
+    features[file_name]['liveliness'] = liveliness_score
 
-    # Function to fetch song lyrics using Genius API
-    def get_song_lyrics(song_title, artist_name):
-        try:
-            song = genius.search_song(song_title, artist_name)
-            return song.lyrics if song else None
-        except Exception as e:
-            st.write(f"Error fetching lyrics for {song_title}: {e}")
-            return None
+# Sort songs by liveliness score
+ranked_songs = sorted(features.items(), key=lambda x: x[1]['liveliness'], reverse=True)
 
-    # Function to analyze lyrics mood using TextBlob sentiment analysis
-    def analyze_lyrics_mood(lyrics):
-        blob = TextBlob(lyrics)
-        sentiment = blob.sentiment.polarity
-        if sentiment > 0:
-            return 'happy'
-        elif sentiment < 0:
-            return 'sad'
-        else:
-            return 'neutral'
+# Step 5: Create a mashup based on hype level
+def create_mashup(selected_songs, output_file='mashup.mp3'):
+    mashup = AudioSegment.silent(duration=0)  # Start with silence
+    for song in selected_songs:
+        song_path = os.path.join(extract_path, song)
+        audio = AudioSegment.from_file(song_path)
+        mashup += audio  # Concatenate songs
+    mashup.export(output_file, format='mp3')
+    print(f'Mashup created: {output_file}')
 
-    # Function to classify songs based on energy and mood
-    def classify_by_energy_and_mood(songs, hype_level, target_mood):
-        # Define energy ranges corresponding to hype levels
-        energy_ranges = {
-            1: (0, 0.1),
-            2: (0.1, 0.2),
-            3: (0.2, 0.3),
-            4: (0.3, 0.4),
-            5: (0.4, 1.0),
-        }
-        
-        min_energy, max_energy = energy_ranges[hype_level]
-        selected_tracks = []
-        
-        for song in songs:
-            file_path = os.path.join("/tmp/songs", song)
-            
-            # Extract audio features
-            energy = get_audio_features(file_path)
-            
-            # Analyze lyrics and mood
-            song_title = song.replace('.mp3', '')  # Assuming song title matches file name
-            lyrics = get_song_lyrics(song_title, 'artist')  # Replace 'artist' with actual artist name if available
-            
-            if lyrics:
-                mood = analyze_lyrics_mood(lyrics)
-                # Filter songs based on both energy and mood
-                if min_energy <= energy <= max_energy and mood == target_mood:
-                    selected_tracks.append(song)
-        
-        return selected_tracks
-
-    # Step 2: User inputs
-    hype_level = st.slider("Set Hype Level (1 to 5):", min_value=1, max_value=5)
-    mood = st.selectbox("Choose Mood (happy, sad, neutral):", ['happy', 'sad', 'neutral'])
-
-    # Classify songs based on the user input
-    filtered_songs = classify_by_energy_and_mood(mp3_files, hype_level, mood)
-    st.write(f"Filtered {len(filtered_songs)} songs with Hype Level {hype_level} and Mood {mood}")
-    st.write("Songs:", filtered_songs)
-
-    # Step 3: Generate mashup from the filtered songs
-    def create_mashup(track_paths, mashup_filename="mashup_output.wav"):
-        mashup = None
-        for track_path in track_paths:
-            y, sr = librosa.load(track_path, sr=None)
-            if mashup is None:
-                mashup = y
-            else:
-                mashup = np.concatenate((mashup, y))  # Concatenate audio data
-        sf.write(mashup_filename, mashup, sr)
-        return mashup_filename
-
-    # If there are filtered songs, generate a mashup from them
-    if len(filtered_songs) > 0:
-        track_paths = [os.path.join("/tmp/songs", song) for song in filtered_songs[:2]]  # Limit to first 2 tracks for demo
-        mashup_filename = create_mashup(track_paths)
-        st.success("Mashup created successfully!")
-        st.write("File saved as:", mashup_filename)
+# Determine songs based on hype level
+def get_songs_based_on_hype(hype_level):
+    if hype_level == 'low':
+        return [song[0] for song in ranked_songs[-5:]]  # Last 5 songs
+    elif hype_level == 'medium':
+        return [song[0] for song in ranked_songs[len(ranked_songs)//4:3*len(ranked_songs)//4]]
+    elif hype_level == 'high':
+        return [song[0] for song in ranked_songs[:5]]  # Top 5 songs
     else:
-        st.write("No songs found with the specified energy level and mood.")
+        print("Invalid hype level. Please choose from 'low', 'medium', or 'high'.")
+        return []
+
+# Example usage
+hype_level = 'high'  # Change this to 'low', 'medium', or 'high'
+selected_songs = get_songs_based_on_hype(hype_level)
+create_mashup(selected_songs)
