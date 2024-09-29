@@ -93,15 +93,6 @@ body {{
     background: linear-gradient(45deg, rgba(255,0,150,0.8), rgba(0, 255, 255, 0.8), rgba(0, 255, 0, 0.8), rgba(255,255,0,0.8));
     animation: pulse 2s ease-in-out infinite;
 }}
-.club-lights-vertical {{
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 20px;
-    height: 100%;
-    background: linear-gradient(45deg, rgba(255,0,150,0.8), rgba(0, 255, 255, 0.8), rgba(0, 255, 0, 0.8), rgba(255,255,0,0.8));
-    animation: pulse-vertical 2s ease-in-out infinite;
-}}
 @keyframes pulse {{
     0% {{ opacity: 1; }}
     50% {{ opacity: 0.6; }}
