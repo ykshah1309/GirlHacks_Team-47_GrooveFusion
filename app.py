@@ -5,6 +5,8 @@ import numpy as np
 from pydub import AudioSegment
 import streamlit as st
 import base64
+import matplotlib.pyplot as plt
+import io
 
 # Ensure the temp directory exists
 if not os.path.exists("temp"):
@@ -25,7 +27,7 @@ def extract_best_segments(file_path):
     return segments
 
 # Function to create a mashup from selected songs
-def create_mashup(selected_songs, hype_level, output_file='mashup.mp3'):
+def create_mashup(selected_songs, hype_level, transition_duration, output_file='mashup.mp3', cue_points=None):
     mashup = AudioSegment.silent(duration=0)  # Start with silence
     used_segments = []  # Track used segments
 
@@ -52,7 +54,7 @@ def create_mashup(selected_songs, hype_level, output_file='mashup.mp3'):
             # Apply beat matching and transitions
             if len(mashup) > 0:
                 mashup = mashup.fade_out(500)  # Fade out the last segment
-                mashup = mashup.append(audio_segment.fade_in(500), crossfade=1500)
+                mashup = mashup.append(audio_segment.fade_in(transition_duration), crossfade=transition_duration)
             else:
                 mashup += audio_segment.fade_in(500)
 
@@ -98,11 +100,6 @@ body {{
     50% {{ opacity: 0.6; }}
     100% {{ opacity: 1; }}
 }}
-@keyframes pulse-vertical {{
-    0% {{ opacity: 1; }}
-    50% {{ opacity: 0.6; }}
-    100% {{ opacity: 1; }}
-}}
 </style>
 '''
 
@@ -125,6 +122,16 @@ uploaded_files = st.file_uploader("Upload your MP3 files", type=["mp3"], accept_
 # Select hype level with a slider
 hype_level = st.slider("Adjust the Hype Level 🕺", min_value=1, max_value=3, value=2, format="%d", help="1: Low, 2: Medium, 3: High")
 
+# Select transition duration
+transition_duration = st.slider("Select Transition Duration (ms)", min_value=100, max_value=3000, value=1500, help="Adjust the duration of crossfade transitions.")
+
+# Cue Points
+cue_points = {}
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        cue_point = st.number_input(f"Set Cue Point for {uploaded_file.name} (in seconds)", min_value=0.0, value=0.0, step=0.1, help="Set a cue point or leave it at 0 for no cue.")
+        cue_points[uploaded_file.name] = cue_point
+
 if st.button("Create Mashup"):
     if uploaded_files:
         song_paths = []
@@ -135,18 +142,25 @@ if st.button("Create Mashup"):
                 f.write(uploaded_file.getbuffer())
             song_paths.append(temp_path)
 
-        # Create the mashup
-        output_file = create_mashup(song_paths, "high" if hype_level == 3 else "medium" if hype_level == 2 else "low")
+        # Create the mashup with optional cue points
+        output_file = create_mashup(song_paths, "high" if hype_level == 3 else "medium" if hype_level == 2 else "low", transition_duration, cue_points=cue_points)
 
         # Provide download link for the generated mashup
         st.success("Mashup created successfully!")
         with open(output_file, 'rb') as f:
             st.download_button("Download Mashup", f, file_name='mashup.mp3', mime='audio/mp3')
 
+        # Dynamic Visualization
+        '''fig, ax = plt.subplots()
+        for song in song_paths:
+            y, sr = librosa.load(song)
+            ax.plot(librosa.times_like(y), y, label=os.path.basename(song))
+        ax.set(title='Waveforms of Selected Songs', xlabel='Time (s)', ylabel='Amplitude')
+        ax.legend()
+        st.pyplot(fig)'''
+
         # Display the groovy audio player
-        st.markdown("<div class='audio-player'>", unsafe_allow_html=True)
-        st.audio(output_file)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.audio(output_file)  # Mashup player
 
     else:
         st.error("Please upload at least one MP3 file.")
