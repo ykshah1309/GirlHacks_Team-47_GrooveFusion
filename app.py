@@ -60,19 +60,56 @@ def create_mashup(selected_songs, hype_level, output_file='mashup.mp3'):
             used_segments.append(segment_start)
 
     # Final adjustments for DJ effects without affecting song quality
-    # You can add effects like low-pass and high-pass filters here if needed
-
     mashup.export(output_file, format='mp3')
     return output_file
 
-# Streamlit UI
-st.title("DJ Mashup Creator")
+# Streamlit UI with disco theme
+st.set_page_config(page_title="DJ Mashup Creator", page_icon="🎵", layout="centered")
+
+# Add background styling with club lights (removed the disco ball)
+page_bg_img = '''
+<style>
+body {
+    background-image: url("/content/Purple and Pink Neon Party Virtual Invitation.png");
+    background-size: cover;
+}
+
+# Club lights
+.club-lights {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(45deg, rgba(255,0,150,0.8), rgba(0, 255, 255, 0.8), rgba(0, 255, 0, 0.8), rgba(255,255,0,0.8));
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+</style>
+'''
+
+# Add the club lights HTML
+club_lights_html = '''
+<div class="club-lights"></div>
+'''
+
+# Injecting background and elements into the app
+st.markdown(page_bg_img, unsafe_allow_html=True)
+st.markdown(club_lights_html, unsafe_allow_html=True)
+
+st.title("🕺 Disco DJ Mashup Creator 💃")
+st.markdown("<h2 style='color: hotpink;'>Create your own party mashup!</h2>", unsafe_allow_html=True)
 
 # Upload mp3 files
 uploaded_files = st.file_uploader("Upload your MP3 files", type=["mp3"], accept_multiple_files=True)
 
-# Select hype level
-hype_level = st.selectbox("Select hype level", ["low", "medium", "high"])
+# Select hype level with a slider
+hype_level = st.slider("Adjust the Hype Level 🕺", min_value=1, max_value=3, value=2, format="%d", help="1: Low, 2: Medium, 3: High")
 
 if st.button("Create Mashup"):
     if uploaded_files:
@@ -85,7 +122,7 @@ if st.button("Create Mashup"):
             song_paths.append(temp_path)
 
         # Create the mashup
-        output_file = create_mashup(song_paths, hype_level)
+        output_file = create_mashup(song_paths, "high" if hype_level == 3 else "medium" if hype_level == 2 else "low")
 
         # Provide download link for the generated mashup
         st.success("Mashup created successfully!")
