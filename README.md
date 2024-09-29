@@ -51,6 +51,7 @@ Make sure to install these before you start creating your awesome mashups!
 <img width="949" alt="image" src="https://github.com/user-attachments/assets/cc629739-6b72-41c3-8705-3da07029c0c8">
 <img width="949" alt="image" src="https://github.com/user-attachments/assets/56013c3a-cfad-430d-a996-3a74873c357a">
 <img width="945" alt="image" src="https://github.com/user-attachments/assets/a248643a-0690-45eb-ab86-722d27af1cf0">
+<img width="944" alt="image" src="https://github.com/user-attachments/assets/ea6f5975-c385-4b26-a85a-b09bb0faefaf">
 
 
 
