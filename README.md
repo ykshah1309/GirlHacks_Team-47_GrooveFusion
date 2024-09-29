@@ -36,3 +36,9 @@ To get this project up and running, you'll need the following Python packages:
 
 Make sure to install these before you start creating your awesome mashups!
 
+<img width="955" alt="image" src="https://github.com/user-attachments/assets/858f2cb7-158f-41a4-ba49-fc49409820dd">
+<img width="958" alt="image" src="https://github.com/user-attachments/assets/3ed6625a-8ce9-4464-8572-006f5b898a35">
+<img width="951" alt="image" src="https://github.com/user-attachments/assets/64599ea2-0e65-4769-89d9-62486a283f9e">
+
+
+
