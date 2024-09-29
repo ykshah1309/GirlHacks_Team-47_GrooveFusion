@@ -1,6 +1,6 @@
 🎧 GrooveFusion 🎶
 
-Ever wanted to mix your favorite tracks like a pro DJ? Now you can with DJ Mashup Creator! This project lets you upload your own MP3 files and automatically creates a high-energy mashup based on the vibe you want. 🎉
+Ever wanted to mix your favorite tracks like a pro DJ? Now you can with GrooveFusion! This project lets you upload your own MP3 files and automatically creates a high-energy mashup based on the vibe you want. 🎉
 
 Features:
 
