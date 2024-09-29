@@ -3,37 +3,11 @@ import os
 import librosa
 import numpy as np
 from pydub import AudioSegment
-from pydub.playback import play
-from scipy.signal import butter, lfilter
 import streamlit as st
 
 # Ensure the temp directory exists
 if not os.path.exists("temp"):
     os.makedirs("temp")
-
-# Function to apply a low-pass filter
-def low_pass_filter(audio_segment, cutoff=2000):
-    samples = np.array(audio_segment.get_array_of_samples())
-    b, a = butter(5, cutoff / (audio_segment.frame_rate / 2), btype='low')
-    filtered_samples = lfilter(b, a, samples)
-    return AudioSegment(
-        filtered_samples.astype(np.int16).tobytes(),
-        frame_rate=audio_segment.frame_rate,
-        sample_width=audio_segment.sample_width,
-        channels=audio_segment.channels
-    )
-
-# Function to apply a high-pass filter
-def high_pass_filter(audio_segment, cutoff=2000):
-    samples = np.array(audio_segment.get_array_of_samples())
-    b, a = butter(5, cutoff / (audio_segment.frame_rate / 2), btype='high')
-    filtered_samples = lfilter(b, a, samples)
-    return AudioSegment(
-        filtered_samples.astype(np.int16).tobytes(),
-        frame_rate=audio_segment.frame_rate,
-        sample_width=audio_segment.sample_width,
-        channels=audio_segment.channels
-    )
 
 # Function to extract segments based on energy
 def extract_best_segments(file_path):
@@ -52,6 +26,7 @@ def extract_best_segments(file_path):
 # Function to create a mashup from selected songs
 def create_mashup(selected_songs, hype_level, output_file='mashup.mp3'):
     mashup = AudioSegment.silent(duration=0)  # Start with silence
+    used_segments = []  # Track used segments
 
     # Calculate total duration and target segment length
     total_length = sum([AudioSegment.from_file(song).duration_seconds for song in selected_songs])  # Total length of songs
@@ -59,30 +34,33 @@ def create_mashup(selected_songs, hype_level, output_file='mashup.mp3'):
 
     for song in selected_songs:
         best_segments = extract_best_segments(song)  # Get the best segments with timings
-
+        
+        # Filter out used segments
+        available_segments = [seg for seg in best_segments if seg not in used_segments]
+        
         # Select segments based on hype level
         num_segments = 3 if hype_level == 'high' else 2 if hype_level == 'medium' else 1
         
-        for segment_start in best_segments[:num_segments]:
+        for segment_start in available_segments[:num_segments]:
             start_time = int(segment_start * 1000)  # Convert to milliseconds
             end_time = start_time + int(segment_length)  # Calculate end time based on segment length
             
             # Load audio and extract the segment
             audio_segment = AudioSegment.from_file(song)[start_time:end_time]  # Extract the segment
-
-            # Apply effects based on hype level
-            if hype_level == 'high':
-                audio_segment = audio_segment + audio_segment.fade_in(2000).fade_out(2000)  # Add fade in/out
-                audio_segment = low_pass_filter(audio_segment)  # Apply low-pass filter
-            elif hype_level == 'medium':
-                audio_segment = high_pass_filter(audio_segment)  # Apply high-pass filter
             
-            # Apply fade in and fade out effects for smoother transitions
+            # Apply beat matching and transitions
             if len(mashup) > 0:  # Check if there's already something in the mashup
+                # Use a short fade out and a gradual crossfade for beat matching
                 mashup = mashup.fade_out(500)  # Fade out the last segment
-                mashup = mashup.append(audio_segment.fade_in(500), crossfade=1000)  # Fade in the new segment with crossfade
+                mashup = mashup.append(audio_segment.fade_in(500), crossfade=1500)  # Fade in the new segment over 1.5 seconds
             else:
                 mashup += audio_segment.fade_in(500)  # Just fade in the first segment
+
+            # Add the segment to used segments
+            used_segments.append(segment_start)
+
+    # Final adjustments for DJ effects without affecting song quality
+    # You can add effects like low-pass and high-pass filters here if needed
 
     mashup.export(output_file, format='mp3')
     return output_file
