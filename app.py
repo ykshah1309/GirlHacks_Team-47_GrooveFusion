@@ -4,6 +4,7 @@ import librosa
 import numpy as np
 from pydub import AudioSegment
 import streamlit as st
+import base64
 
 # Ensure the temp directory exists
 if not os.path.exists("temp"):
@@ -66,16 +67,25 @@ def create_mashup(selected_songs, hype_level, output_file='mashup.mp3'):
 # Streamlit UI with disco theme
 st.set_page_config(page_title="DJ Mashup Creator", page_icon="🎵", layout="centered")
 
-# Add background styling with club lights (removed the disco ball)
-page_bg_img = '''
-<style>
-body {
-    background-image: url("/content/Purple and Pink Neon Party Virtual Invitation.png");
-    background-size: cover;
-}
+# Function to encode the image to base64
+def get_base64_image(img_path):
+    with open(img_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
 
-# Club lights
-.club-lights {
+# Convert the image located at /content/Purple and Pink Neon Party Virtual Invitation.png to Base64
+base64_img = get_base64_image("/content/Purple and Pink Neon Party Virtual Invitation.png")
+
+# Add background styling with club lights and base64 image
+page_bg_img = f'''
+<style>
+body {{
+    background-image: url("data:image/png;base64,{base64_img}");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}}
+
+.club-lights {{
     position: fixed;
     top: 0;
     left: 0;
@@ -83,13 +93,13 @@ body {
     height: 100px;
     background: linear-gradient(45deg, rgba(255,0,150,0.8), rgba(0, 255, 255, 0.8), rgba(0, 255, 0, 0.8), rgba(255,255,0,0.8));
     animation: pulse 2s ease-in-out infinite;
-}
+}}
 
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.6; }
-    100% { opacity: 1; }
-}
+@keyframes pulse {{
+    0% {{ opacity: 1; }}
+    50% {{ opacity: 0.6; }}
+    100% {{ opacity: 1; }}
+}}
 </style>
 '''
 
