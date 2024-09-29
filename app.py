@@ -150,15 +150,6 @@ if st.button("Create Mashup"):
         with open(output_file, 'rb') as f:
             st.download_button("Download Mashup", f, file_name='mashup.mp3', mime='audio/mp3')
 
-        # Dynamic Visualization
-        '''fig, ax = plt.subplots()
-        for song in song_paths:
-            y, sr = librosa.load(song)
-            ax.plot(librosa.times_like(y), y, label=os.path.basename(song))
-        ax.set(title='Waveforms of Selected Songs', xlabel='Time (s)', ylabel='Amplitude')
-        ax.legend()
-        st.pyplot(fig)'''
-
         # Display the groovy audio player
         st.audio(output_file)  # Mashup player
 
