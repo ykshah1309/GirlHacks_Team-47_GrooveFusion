@@ -5,22 +5,33 @@ Ever wanted to mix your favorite tracks like a pro DJ? Now you can with DJ Mashu
 
 
 Features:
+
 •	Upload your music: Add your MP3 files directly in the app.
+
 •	Energy-based segments: We analyze the energy of each song and pick the best parts to include.
+
 •	Custom Hype Levels: Want a chill vibe? Choose 'Low'. Need to bring the house down? Go for 'High'! 🔥
+
 •	Smooth Transitions: No awkward cuts! Your mashup will flow with professional-grade beat matching and crossfades.
+
 •	Download & Play: Get your mashup instantly as an MP3 file or jam out right in the app. 🎵
 
 
 How It Works:
+
 1.	Upload your MP3 files.
+
 2.	Choose your hype level: Low, Medium, or High.
+
 3.	Hit Create Mashup – we’ll take care of the rest!
+
 4.	Download your custom mashup and impress your friends with a unique track! 💿
+
 Whether you’re prepping for a party or just want a fun mashup of your playlist, this tool gives you that DJ feel in seconds! 🎶
 
 
 Packages Needed:
+
 To get this project up and running, you'll need the following Python packages:
 •	scipy
 •	SpeechRecognition
